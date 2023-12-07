@@ -4,6 +4,7 @@ import contactsController from "../../controllers/contacts-controller.js";
 import isEmptyBody from "../../utils/middlewares/isEmptyBody.js";
 import isValidId from "../../utils/middlewares/isValidId.js";
 import authenticate from "../../utils/middlewares/authenticate.js";
+import upload from "../../utils/middlewares/upload.js";
 
 const contactsRouter = express.Router();
 
@@ -13,7 +14,12 @@ contactsRouter.get("/", contactsController.getAll);
 
 contactsRouter.get("/:contactId", isValidId, contactsController.getById);
 
-contactsRouter.post("/", isEmptyBody, contactsController.add);
+contactsRouter.post(
+  "/",
+  upload.single("avatar"),
+  isEmptyBody,
+  contactsController.add
+);
 
 contactsRouter.put(
   "/:contactId",

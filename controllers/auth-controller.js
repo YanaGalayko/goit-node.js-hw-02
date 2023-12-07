@@ -1,10 +1,14 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import gravatar from "gravatar";
+import path from "path";
+import jimp from "jimp";
+import fs from "fs/promises";
 import User from "../models/User.js";
 import { HttpError } from "../utils/helpers/HttpError.js";
-import authenticate from "../utils/middlewares/authenticate.js";
 
 const { JWT_SECRET } = process.env;
+const avatarPath = path.resolve("public", "avatars");
 
 const register = async (req, res, next) => {
   try {
@@ -14,11 +18,17 @@ const register = async (req, res, next) => {
       return next(HttpError(409, "Email already exist"));
     }
 
+    const avatarURL = gravatar.url(email);
     const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ ...req.body, password: hashPassword });
+    const newUser = await User.create({
+      ...req.body,
+      avatarURL,
+      password: hashPassword,
+    });
     res.status(201).json({
       user: {
         email: newUser.email,
+        avatarURL: newUser.avatarURL,
         subscription: newUser.subscription,
       },
     });
@@ -85,10 +95,35 @@ const subscription = async (req, res, next) => {
   }
 };
 
+const updateAvatar = async (req, res, next) => {
+  try {
+    const { _id } = req.user;
+    const { path: oldPath, originalname } = req.file;
+
+    await jimp.read(oldPath).then((img) => {
+      img.resize(250, 250).quality(60).write(oldPath);
+    });
+
+    const filename = `${_id}_${originalname}`;
+    const newPath = path.join(avatarPath, filename);
+    await fs.rename(oldPath, newPath);
+
+    const avatarURL = path.join("avatars", filename);
+    await User.findByIdAndUpdate(_id, { avatarURL });
+
+    res.json({
+      avatarURL,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   register,
   login,
   getCurrent,
   logout,
   subscription,
+  updateAvatar,
 };
