@@ -9,6 +9,10 @@ export const userRegisterSchema = Joi.object({
   subscription: Joi.string(),
 });
 
+export const userEmailSchema = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+});
+
 export const userLoginSchema = Joi.object({
   email: Joi.string().pattern(emailRegexp).required(),
   password: Joi.string().required(),
