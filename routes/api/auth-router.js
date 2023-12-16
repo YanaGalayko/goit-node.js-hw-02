@@ -5,6 +5,7 @@ import {
   userRegisterSchema,
   userLoginSchema,
   userSubscriptionSchema,
+  userEmailSchema,
 } from "../../utils/validation/authValidationSchemas.js";
 import { validateBody } from "../../utils/decorators/validateBody.js";
 import authenticate from "../../utils/middlewares/authenticate.js";
@@ -17,6 +18,15 @@ authRouter.post(
   isEmptyBody,
   validateBody(userRegisterSchema),
   authController.register
+);
+
+authRouter.get("/verify/:verificationToken", authController.verify);
+
+authRouter.post(
+  "/verify",
+  isEmptyBody,
+  validateBody(userEmailSchema),
+  authController.resendVerify
 );
 
 authRouter.post(
